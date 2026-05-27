@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sanvox AI Teacher</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #060618;
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: white;
+      padding: 15px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 85vh;
+    }
+    .chat-container {
+      width: 100%;
+      max-width: 650px;
+      background: #0d0d28;
+      border-radius: 25px;
+      border: 1px solid rgba(74, 74, 255, 0.3);
+      padding: 20px;
+      box-shadow: 0 0 40px rgba(74, 74, 255, 0.15);
+      display: flex;
+      flex-direction: column;
+    }
+    .selectors {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      justify-content: center;
+    }
+    .selectors select {
+      padding: 8px 14px;
+      border-radius: 20px;
+      border: 1px solid #4a4aff;
+      background: #0a0a1a;
+      color: white;
+      outline: none;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .chat-box {
+      background: #0a0a1e;
+      border-radius: 15px;
+      padding: 15px;
+      height: 320px;
+      overflow-y: auto;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      margin-bottom: 15px;
+    }
+    .msg {
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      border-radius: 15px;
+      font-size: 14px;
+      line-height: 1.5;
+      max-width: 85%;
+    }
+    .msg.user {
+      background: rgba(74, 74, 255, 0.2);
+      color: #aaaaff;
+      margin-left: auto;
+      border-right: 4px solid #4a4aff;
+    }
+    .msg.bot {
+      background: rgba(0, 255, 136, 0.1);
+      color: #aaffcc;
+      margin-right: auto;
+      border-left: 4px solid #00ff88;
+    }
+    .input-area {
+      display: flex;
+      gap: 10px;
+    }
+    .input-area input {
+      flex: 1;
+      padding: 12px 18px;
+      border-radius: 25px;
+      border: 1px solid rgba(74, 74, 255, 0.2);
+      background: #0a0a1a;
+      color: white;
+      outline: none;
+      font-size: 14px;
+    }
+    .input-area button {
+      padding: 12px 22px;
+      border-radius: 25px;
+      border: none;
+      background: #4a4aff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div class="chat-container">
+  <div class="selectors">
+    <select id="toneSelect">
+      <option value="neutral">🧑 Neutral Tone</option>
+      <option value="male">👦 Brotherly Tone</option>
+      <option value="female">👧 Sisterly Tone</option>
+    </select>
+    <select id="modeSelect">
+      <option value="student">🎒 Student Mode</option>
+      <option value="professional">💼 Professional Mode</option>
+      <option value="researcher">🔬 Researcher Mode</option>
+    </select>
+  </div>
+
+  <div class="chat-box" id="chatBox">
+    <div class="msg bot">Hello! I am Sanvox AI, running live from our secure cloud network. Ask me absolutely anything on earth! 🌟</div>
+  </div>
+
+  <div class="input-area">
+    <input type="text" id="userInput" placeholder="Ask anything..." />
+    <button onclick="sendMessage()">Send</button>
+  </div>
+</div>
+
+<script>
+  const API_KEY = "AIzaSyCMByrfDg8PYTzkQbqKrp_wk7_4oWBrU7s";
+
+  const chatBox = document.getElementById("chatBox");
+  const userInput = document.getElementById("userInput");
+  const toneSelect = document.getElementById("toneSelect");
+  const modeSelect = document.getElementById("modeSelect");
+
+  function addMessage(type, text) {
+    const div = document.createElement("div");
+    div.className = `msg ${type}`;
+    div.innerHTML = marked.parse(text);
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  async function sendMessage() {
+    const text = userInput.value.trim();
+    if (!text) return;
+
+    addMessage("user", text);
+    userInput.value = "";
+
+    const tone = toneSelect.value;
+    const mode = modeSelect.value;
+    
+    let persona = "You are Sanvox, an advanced AI Teacher. Answer completely and dynamically. ";
+    if (tone === "male") persona += "Use a friendly, casual, brotherly tone. ";
+    if (tone === "female") persona += "Use a warm, encouraging, sisterly tone. ";
+    if (mode === "student") persona += "Break down your answer simply for a student to grasp easily. ";
+    if (mode === "professional") persona += "Provide clean, sharp, corporate and career-focused insights. ";
+    if (mode === "researcher") persona += "Be deep, thoroughly analytical, and highly detailed. ";
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          contents: [{ parts: [{ text: persona + "\n\nQuestion: " + text }] }] 
+        })
+      });
+
+      const data = await response.json();
+      const reply = data.candidates[0].content.parts[0].text;
+      addMessage("bot", reply);
+    } catch (error) {
+      addMessage("bot", "⚠️ System frame processing error. Re-check data lines.");
+    }
+  }
+
+  userInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") sendMessage();
+  });
+</script>
+
+</body>
+  </html>
+  
